@@ -4,7 +4,8 @@ import sys
 
 from appstoreconnect import Api, UserRole
 
-if __name__ == "__main__":
+
+def main():
     key_id = sys.argv[1]
     key_file = sys.argv[2]
     issuer_id = sys.argv[3]
@@ -40,3 +41,7 @@ if __name__ == "__main__":
         filters={"vendorNumber": "123456789", "reportDate": "2019-06"},
         save_to="finance.csv",
     )
+
+
+if __name__ == "__main__":
+    main()
