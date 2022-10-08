@@ -1,18 +1,42 @@
-import requests
-import jwt
 import gzip
-import platform
 import hashlib
-from collections import defaultdict
-from pathlib import Path
-from datetime import datetime, timedelta
-import time
 import json
-from typing import List
+import platform
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
 from enum import Enum, auto
+from pathlib import Path
+from typing import List
 
-from .resources import *
+import jwt
+import requests
+
 from .__version__ import __version__ as version
+from .resources import (
+    App,
+    AppEncryptionDeclaration,
+    BetaAppLocalization,
+    BetaAppReviewDetail,
+    BetaAppReviewSubmission,
+    BetaBuildLocalization,
+    BetaGroup,
+    BetaLicenseAgreement,
+    BetaTester,
+    Build,
+    BuildBetaDetail,
+    BundleId,
+    Certificate,
+    Device,
+    FinanceReport,
+    PreReleaseVersion,
+    Profile,
+    Resource,
+    SalesReport,
+    User,
+    UserInvitation,
+    resources,
+)
 
 ALGORITHM = "ES256"
 BASE_API = "https://api.appstoreconnect.apple.com"
@@ -66,7 +90,7 @@ class Api:
             self._submit_stats("session_start")
 
         self._debug = False
-        token = self.token  # generate first token
+        _ = self.token  # generate first token
 
     def __del__(self):
         if self.submit_stats:
@@ -75,7 +99,7 @@ class Api:
     def _generate_token(self):
         try:
             key = open(self.key_file, "r").read()
-        except IOError as e:
+        except IOError:
             key = self.key_file
         self.token_gen_date = datetime.now()
         exp = int(

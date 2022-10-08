@@ -10,7 +10,7 @@ Bugfixes:
 ## 0.9.1
 
 Bugfixes:
-- Relax required dependencies in setup.py 
+- Relax required dependencies in setup.py
 - Fix APIError exception handling
 - Add relationships attribute to the Build resource
 
@@ -63,7 +63,7 @@ Breaking changes API:
  - new parameters for create_beta_tester
  - new parameters for create_beta_group
  - new parameters for submit_app_for_beta_review
- - register_device renamed to register_new_device 
+ - register_device renamed to register_new_device
 
 ## 0.7.0
 
@@ -108,7 +108,7 @@ Bugfixes:
 ## 0.3.0
 
 Features:
-  - Complete API rewrite, "list" methods return an iterator over resources, "get" method returns a resource 
+  - Complete API rewrite, "list" methods return an iterator over resources, "get" method returns a resource
   - Handles all GET endpoints (except the new "Provisioning" section)
   - Handle pagination
   - Handle downloading Finance and Sales reports

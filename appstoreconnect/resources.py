@@ -1,6 +1,6 @@
 import inspect
-from abc import ABC, abstractmethod
 import sys
+from abc import ABC, abstractmethod
 
 
 class Resource(ABC):

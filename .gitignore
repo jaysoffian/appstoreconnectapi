@@ -40,7 +40,7 @@ tramp
 # Windows
 Thumbs.db
 Desktop.ini
-git 
+git
 
 # venv
 .venv/

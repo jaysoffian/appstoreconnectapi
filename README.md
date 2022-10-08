@@ -3,14 +3,14 @@ App Store Connect Api
 
 This is a Python wrapper around the **Apple App Store Api** : https://developer.apple.com/documentation/appstoreconnectapi
 
-So far, it handles token generation / expiration, methods for listing resources and downloading reports. 
+So far, it handles token generation / expiration, methods for listing resources and downloading reports.
 
 Installation
 ------------
 
 [![Version](http://img.shields.io/pypi/v/appstoreconnect.svg?style=flat)](https://pypi.org/project/appstoreconnect/)
 
-The project is published on PyPI, install with: 
+The project is published on PyPI, install with:
 
     pip install appstoreconnect
 
@@ -66,7 +66,7 @@ for certificate in api.list_certificates():
 # modify a user
 user = api.list_users(filters={'username': 'finance@nemoidstudio.com'})[0]
 api.modify_user_account(user, roles=[UserRole.FINANCE, UserRole.ACCESS_TO_REPORTS])
-    
+
 # download sales report
 api.download_sales_and_trends_reports(
     filters={'vendorNumber': '123456789', 'frequency': 'WEEKLY', 'reportDate': '2019-06-09'}, save_to='report.csv')
@@ -75,7 +75,7 @@ api.download_sales_and_trends_reports(
 api.download_finance_reports(filters={'vendorNumber': '123456789', 'reportDate': '2019-06'}, save_to='finance.csv')
 ```
 
-Define a timeout (in seconds) after which an exception is raised if no response is received. 
+Define a timeout (in seconds) after which an exception is raised if no response is received.
 
 ```python
 api = Api(key_id, path_to_key_file, issuer_id, timeout=30)
@@ -90,7 +90,7 @@ Please note this is a work in progress, API is subject to change between version
 Anonymous data collection
 -------------------------
 
-Starting with version 0.8.0 this library anonymously collects its usage to help better improve its development. 
+Starting with version 0.8.0 this library anonymously collects its usage to help better improve its development.
 What we collect is:
 
 - a SHA1 hash of the issuer_id
@@ -111,7 +111,7 @@ The is also an [open issue](https://github.com/Ponytech/appstoreconnectapi/issue
 Development
 -----------
 
-Project development happens on [Github](https://github.com/Ponytech/appstoreconnectapi) 
+Project development happens on [Github](https://github.com/Ponytech/appstoreconnectapi)
 
 
 TODO

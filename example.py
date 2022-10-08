@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-from appstoreconnect import Api, UserRole
 
+from appstoreconnect import Api, UserRole
 
 if __name__ == "__main__":
     key_id = sys.argv[1]
