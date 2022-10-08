@@ -15,9 +15,9 @@ REQUIRES_PYTHON = ">=3.6.0"
 VERSION = None
 
 REQUIRED = [
-    "requests>=2.20.1,==2.*",
-    "PyJWT>=1.6.4,==1.*",
-    "cryptography>=2.6.1,==2.*",
+    "requests~=2.28",
+    "PyJWT~=2.5",
+    "cryptography~=38.0",
 ]
 
 EXTRAS = {}

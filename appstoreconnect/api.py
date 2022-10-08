@@ -86,7 +86,7 @@ class Api:
             key,
             headers={"kid": self.key_id, "typ": "JWT"},
             algorithm=ALGORITHM,
-        ).decode("ascii")
+        )
 
     def _get_resource(self, Resource, resource_id):
         url = "%s%s/%s" % (BASE_API, Resource.endpoint, resource_id)
