@@ -235,7 +235,9 @@ class Api:
         url = f"{BASE_API}{resource.endpoint}/{resource.id}"
         self._api_call(url, HttpMethod.DELETE)
 
-    def _get_resources(self, Resource, filters=None, sort=None, full_url=None):
+    def _get_resources(
+        self, Resource, filters=None, sort=None, full_url=None, includes=None
+    ):
         class IterResource:
             def __init__(self, api, url):
                 self.api = api
@@ -283,20 +285,22 @@ class Api:
                     self.payload.get("meta", {}).get("paging", {}).get("total", 0)
                 )
 
-        url = full_url if full_url else "%s%s" % (BASE_API, Resource.endpoint)
-        url = self._build_query_parameters(url, filters, sort)
+        url = full_url if full_url else f"{BASE_API}{Resource.endpoint}"
+        url = self._build_query_parameters(url, filters, sort, includes)
         return IterResource(self, url)
 
-    def _build_query_parameters(self, url, filters, sort=None):
-        separator = "?"
-        if type(filters) is dict:
-            for index, (filter_name, filter_value) in enumerate(filters.items()):
-                filter_name = "filter[%s]" % filter_name
-                url = "%s%s%s=%s" % (url, separator, filter_name, filter_value)
-                separator = "&"
-        if type(sort) is str:
-            url = "%s%ssort=%s" % (url, separator, sort)
-        return url
+    def _build_query_parameters(self, url, filters, sort=None, includes=None):
+        params = {}
+        if filters:
+            params.update({f"filter[{key}]": filters[key] for key in filters})
+        if sort:
+            params["sort"] = sort
+        if includes:
+            params["includes"] = (
+                includes if isinstance(includes, str) else ",".join(includes)
+            )
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        return f"{url}?{query}"
 
     def _api_call(self, url, method=HttpMethod.GET, post_data=None):
         headers = {"Authorization": f"Bearer {self.token}"}
