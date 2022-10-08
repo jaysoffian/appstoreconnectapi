@@ -421,6 +421,9 @@ class Api:
         """
         return self._get_resources(User, filters, sort)
 
+    def delete_user(self, user):
+        return self._delete_resource(user)
+
     def list_invited_users(self, filters=None, sort=None):
         """
         :reference: https://developer.apple.com/documentation/appstoreconnectapi/list_invited_users
