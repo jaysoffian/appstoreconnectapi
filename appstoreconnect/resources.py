@@ -270,6 +270,15 @@ class Certificate(Resource):
     """
 
     endpoint = "/v1/certificates"
+    attributes = [
+        "certificateContent",
+        "displayName",
+        "expirationDate",
+        "name",
+        "platform",
+        "serialNumber",
+        "certificateType",
+    ]
 
 
 class Device(Resource):
