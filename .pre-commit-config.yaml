@@ -23,3 +23,16 @@ repos:
     rev: 5.0.4
     hooks:
       - id: flake8
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          # enable only error and fatal check output
+          - "--reports=n"
+          - "--score=n"
+          - "--disable=all"
+          - "--enable=E,F"
