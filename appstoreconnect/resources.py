@@ -2,8 +2,6 @@
 appstoreconnect/resources.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-import inspect
-import sys
 from abc import ABC, abstractmethod
 
 
@@ -54,16 +52,29 @@ class Resource(ABC):
         pass
 
 
+resource_types = {}
+
+
+def resource_type(name):
+    def decorator(cls):
+        assert name not in resource_types, "duplicate type name"
+        resource_types[name] = cls
+        cls.type = name
+        return cls
+
+    return decorator
+
+
 # Beta Testers and Groups
 
 
+@resource_type("betaTesters")
 class BetaTester(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betatester
     """
 
     endpoint = "/v1/betaTesters"
-    type = "betaTesters"
     attributes = ["email", "firstName", "inviteType", "lastName"]
     relationships = {
         "apps": {"multiple": True},
@@ -72,13 +83,13 @@ class BetaTester(Resource):
     }
 
 
+@resource_type("betaGroups")
 class BetaGroup(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betagroup
     """
 
     endpoint = "/v1/betaGroups"
-    type = "betaGroups"
     attributes = [
         "isInternalGroup",
         "name",
@@ -99,13 +110,13 @@ class BetaGroup(Resource):
 # App Resources
 
 
+@resource_type("apps")
 class App(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/app
     """
 
     endpoint = "/v1/apps"
-    type = "apps"
     attributes = ["bundleId", "name", "primaryLocale", "sku"]
     relationships = {
         "betaLicenseAgreement": {"multiple": False},
@@ -118,23 +129,23 @@ class App(Resource):
     }
 
 
+@resource_type("preReleaseVersions")
 class PreReleaseVersion(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/preReleaseVersion
     """
 
     endpoint = "/v1/preReleaseVersions"
-    type = "preReleaseVersions"
     attributes = ["platform", "version"]
 
 
+@resource_type("betaAppLocalizations")
 class BetaAppLocalization(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betaAppLocalization
     """
 
     endpoint = "/v1/betaAppLocalizations"
-    type = "betaAppLocalizations"
     attributes = [
         "description",
         "feedbackEmail",
@@ -167,13 +178,13 @@ class BetaLicenseAgreement(Resource):
 # Build Resources
 
 
+@resource_type("builds")
 class Build(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/build
     """
 
     endpoint = "/v1/builds"
-    type = "builds"
     relationships = {
         "app": {"multiple": False},
         "appEncryptionDeclaration": {"multiple": False},
@@ -187,44 +198,44 @@ class Build(Resource):
     }
 
 
+@resource_type("buildBetaDetails")
 class BuildBetaDetail(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/buildBetaDetail
     """
 
     endpoint = "/v1/buildBetaDetails"
-    type = "buildBetaDetails"
 
 
+@resource_type("betaBuildLocalizations")
 class BetaBuildLocalization(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betaBuildLocalization
     """
 
     endpoint = "/v1/betaBuildLocalizations"
-    type = "betaBuildLocalizations"
     attributes = ["locale", "whatsNew"]
     relationships = {
         "build": {"multiple": False},
     }
 
 
+@resource_type("betaAppReviewDetails")
 class BetaAppReviewDetail(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewDetail
     """
 
     endpoint = "/v1/betaAppReviewDetails"
-    type = "betaAppReviewDetails"
 
 
+@resource_type("betaAppReviewSubmissions")
 class BetaAppReviewSubmission(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewSubmission
     """
 
     endpoint = "/v1/betaAppReviewSubmissions"
-    type = "betaAppReviewSubmissions"
     attributes = ["betaReviewState"]
     relationships = {
         "build": {"multiple": False},
@@ -234,19 +245,20 @@ class BetaAppReviewSubmission(Resource):
 # Users and Roles
 
 
+@resource_type("users")
 class User(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/user
     """
 
     endpoint = "/v1/users"
-    type = "users"
     attributes = ["allAppsVisible", "provisioningAllowed", "roles"]
     relationships = {
         "visibleApps": {"multiple": True},
     }
 
 
+@resource_type("userInvitations")
 class UserInvitation(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/userinvitation
@@ -256,6 +268,9 @@ class UserInvitation(Resource):
 
 
 # Provisioning
+
+
+@resource_type("bundleIds")
 class BundleId(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/bundleid
@@ -264,6 +279,7 @@ class BundleId(Resource):
     endpoint = "/v1/bundleIds"
 
 
+@resource_type("certificates")
 class Certificate(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/certificate
@@ -281,13 +297,13 @@ class Certificate(Resource):
     ]
 
 
+@resource_type("devices")
 class Device(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/device
     """
 
     endpoint = "/v1/devices"
-    type = "devices"
     attributes = [
         "deviceClass",
         "model",
@@ -299,6 +315,7 @@ class Device(Resource):
     ]
 
 
+@resource_type("profiles")
 class Profile(Resource):
     """
     https://developer.apple.com/documentation/appstoreconnectapi/profile
@@ -339,15 +356,3 @@ class SalesReport(Resource):
     """
 
     endpoint = "/v1/salesReports"
-
-
-# create an index of Resources by type
-resources = {}
-for name, obj in inspect.getmembers(sys.modules[__name__]):
-    if (
-        inspect.isclass(obj)
-        and issubclass(obj, Resource)
-        and hasattr(obj, "type")
-        and obj != Resource
-    ):
-        resources[getattr(obj, "type")] = obj

@@ -39,7 +39,7 @@ from .resources import (
     SalesReport,
     User,
     UserInvitation,
-    resources,
+    resource_types,
 )
 
 ALGORITHM = "ES256"
@@ -123,7 +123,7 @@ class Api:
 
     def _get_resource_from_payload_data(self, payload):
         try:
-            resource_type = resources[payload.get("type")]
+            resource_type = resource_types[payload.get("type")]
         except KeyError:
             raise APIError("Unsupported resource type %s" % payload.get("type"))
 
