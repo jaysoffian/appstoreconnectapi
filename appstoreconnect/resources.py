@@ -58,6 +58,10 @@ class Resource(ABC):
 
 
 class BetaTester(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betatester
+    """
+
     endpoint = "/v1/betaTesters"
     type = "betaTesters"
     attributes = ["email", "firstName", "inviteType", "lastName"]
@@ -66,12 +70,13 @@ class BetaTester(Resource):
         "betaGroups": {"multiple": True},
         "builds": {"multiple": True},
     }
-    documentation = (
-        "https://developer.apple.com/documentation/appstoreconnectapi/betatester"
-    )
 
 
 class BetaGroup(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betagroup
+    """
+
     endpoint = "/v1/betaGroups"
     type = "betaGroups"
     attributes = [
@@ -89,15 +94,16 @@ class BetaGroup(Resource):
         "betaTesters": {"multiple": True},
         "builds": {"multiple": True},
     }
-    documentation = (
-        "https://developer.apple.com/documentation/appstoreconnectapi/betagroup"
-    )
 
 
 # App Resources
 
 
 class App(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/app
+    """
+
     endpoint = "/v1/apps"
     type = "apps"
     attributes = ["bundleId", "name", "primaryLocale", "sku"]
@@ -110,17 +116,23 @@ class App(Resource):
         "builds": {"multiple": True},
         "betaAppReviewDetail": {"multiple": False},
     }
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/app"
 
 
 class PreReleaseVersion(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/preReleaseVersion
+    """
+
     endpoint = "/v1/preReleaseVersions"
     type = "preReleaseVersions"
     attributes = ["platform", "version"]
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/preReleaseVersion/attributes"
 
 
 class BetaAppLocalization(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betaAppLocalization
+    """
+
     endpoint = "/v1/betaAppLocalizations"
     type = "betaAppLocalizations"
     attributes = [
@@ -132,29 +144,36 @@ class BetaAppLocalization(Resource):
         "tvOsPrivacyPolicy",
     ]
     relationships = {"app": {"multiple": False}}
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/betaAppLocalization/attributes"
 
 
+@resource_type("appEncryptionDeclarations")
 class AppEncryptionDeclaration(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/appEncryptionDeclaration
+    """
+
     endpoint = "/v1/appEncryptionDeclarations"
-    type = "appEncryptionDeclarations"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/appEncryptionDeclaration/attributes"
 
 
+@resource_type("betaLicenseAgreements")
 class BetaLicenseAgreement(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betaLicenseAgreement
+    """
+
     endpoint = "/v1/betaLicenseAgreements"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/betaLicenseAgreement/attributes"
 
 
 # Build Resources
 
 
 class Build(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/build
+    """
+
     endpoint = "/v1/builds"
     type = "builds"
-    documentation = (
-        "https://developer.apple.com/documentation/appstoreconnectapi/build/attributes"
-    )
     relationships = {
         "app": {"multiple": False},
         "appEncryptionDeclaration": {"multiple": False},
@@ -169,93 +188,124 @@ class Build(Resource):
 
 
 class BuildBetaDetail(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/buildBetaDetail
+    """
+
     endpoint = "/v1/buildBetaDetails"
     type = "buildBetaDetails"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/buildBetaDetail/attributes"
 
 
 class BetaBuildLocalization(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betaBuildLocalization
+    """
+
     endpoint = "/v1/betaBuildLocalizations"
     type = "betaBuildLocalizations"
     attributes = ["locale", "whatsNew"]
     relationships = {
         "build": {"multiple": False},
     }
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/betaBuildLocalization/attributes"
 
 
 class BetaAppReviewDetail(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewDetail
+    """
+
     endpoint = "/v1/betaAppReviewDetails"
     type = "betaAppReviewDetails"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewDetail/attributes"
 
 
 class BetaAppReviewSubmission(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewSubmission
+    """
+
     endpoint = "/v1/betaAppReviewSubmissions"
     type = "betaAppReviewSubmissions"
     attributes = ["betaReviewState"]
     relationships = {
         "build": {"multiple": False},
     }
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/betaAppReviewSubmission/attributes"
 
 
 # Users and Roles
 
 
 class User(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/user
+    """
+
     endpoint = "/v1/users"
     type = "users"
     attributes = ["allAppsVisible", "provisioningAllowed", "roles"]
     relationships = {
         "visibleApps": {"multiple": True},
     }
-    documentation = (
-        "https://developer.apple.com/documentation/appstoreconnectapi/user/attributes"
-    )
 
 
 class UserInvitation(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/userinvitation
+    """
+
     endpoint = "/v1/userInvitations"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/userinvitation/attributes"
 
 
 # Provisioning
 class BundleId(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/bundleid
+    """
+
     endpoint = "/v1/bundleIds"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/bundleid/attributes"
 
 
 class Certificate(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/certificate
+    """
+
     endpoint = "/v1/certificates"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/certificate/attributes"
 
 
 class Device(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/device
+    """
+
     endpoint = "/v1/devices"
     type = "devices"
-    attributes = ["name", "platform", "udid", "status"]
-    documentation = (
-        "https://developer.apple.com/documentation/appstoreconnectapi/device/attributes"
-    )
 
 
 class Profile(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/profile
+    """
+
     endpoint = "/v1/profiles"
-    documentation = "https://developer.apple.com/documentation/appstoreconnectapi/profile/attributes"
 
 
 # Reporting
 
 
 class FinanceReport(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/download_finance_reports
+    """
+
     endpoint = "/v1/financeReports"
-    filters = "https://developer.apple.com/documentation/appstoreconnectapi/download_finance_reports"
 
 
 class SalesReport(Resource):
+    """
+    https://developer.apple.com/documentation/appstoreconnectapi/download_sales_and_trends_reports
+    """
+
     endpoint = "/v1/salesReports"
-    filters = "https://developer.apple.com/documentation/appstoreconnectapi/download_sales_and_trends_reports"
 
 
 # create an index of Resources by type
