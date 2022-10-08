@@ -117,15 +117,16 @@ class Api:
         )
 
     def _get_resource(self, Resource, resource_id):
-        url = "%s%s/%s" % (BASE_API, Resource.endpoint, resource_id)
+        url = f"{BASE_API}{Resource.endpoint}/{resource_id}"
         payload = self._api_call(url)
         return Resource(payload.get("data", {}), self)
 
     def _get_resource_from_payload_data(self, payload):
+        payload_type = payload.get("type")
         try:
-            resource_type = resource_types[payload.get("type")]
+            resource_type = resource_types[payload_type]
         except KeyError:
-            raise APIError("Unsupported resource type %s" % payload.get("type"))
+            raise APIError(f"Unsupported resource type {payload_type}")
 
         return resource_type(payload, self)
 
@@ -178,7 +179,7 @@ class Api:
                 "type": Resource.type,
             }
         }
-        url = "%s%s" % (BASE_API, Resource.endpoint)
+        url = f"{BASE_API}{Resource.endpoint}"
         if self._debug:
             print(post_data)
         payload = self._api_call(url, HttpMethod.POST, post_data)
@@ -223,7 +224,7 @@ class Api:
         if len(relationships):
             post_data["data"]["relationships"] = relationships
 
-        url = "%s%s/%s" % (BASE_API, resource.endpoint, resource.id)
+        url = f"{BASE_API}{resource.endpoint}/{resource.id}"
         if self._debug:
             print(post_data)
         payload = self._api_call(url, HttpMethod.PATCH, post_data)
@@ -231,7 +232,7 @@ class Api:
         return type(resource)(payload.get("data", {}), self)
 
     def _delete_resource(self, resource: Resource):
-        url = "%s%s/%s" % (BASE_API, resource.endpoint, resource.id)
+        url = f"{BASE_API}{resource.endpoint}/{resource.id}"
         self._api_call(url, HttpMethod.DELETE)
 
     def _get_resources(self, Resource, filters=None, sort=None, full_url=None):
@@ -251,7 +252,7 @@ class Api:
                 return self
 
             def __repr__(self):
-                return "Iterator over %s resource" % Resource.__name__
+                return f"Iterator over {Resource.__name__} resource"
 
             def __len__(self):
                 if not self.payload:
@@ -298,9 +299,9 @@ class Api:
         return url
 
     def _api_call(self, url, method=HttpMethod.GET, post_data=None):
-        headers = {"Authorization": "Bearer %s" % self.token}
+        headers = {"Authorization": f"Bearer {self.token}"}
         if self._debug:
-            print("%s %s" % (method.value, url))
+            print(f"{method.value} {url}")
 
         if self._submit_stats:
             endpoint = url.replace(BASE_API, "")
@@ -309,7 +310,7 @@ class Api:
                 HttpMethod.DELETE,
             ):  # remove last bit of endpoint which is a resource id
                 endpoint = "/".join(endpoint.split("/")[:-1])
-            request = "%s %s" % (method.name, endpoint)
+            request = f"{method.name} {endpoint}"
             self._call_stats[request] += 1
 
         try:
@@ -365,7 +366,7 @@ class Api:
             return data.decode("utf-8")
         else:
             if not 200 <= r.status_code <= 299:
-                raise APIError("HTTP error [%d][%s]" % (r.status_code, r.content))
+                raise APIError(f"HTTP error [{r.status_code}][{r.content}]")
             return r
 
     def _submit_stats(self, event_type):
@@ -791,7 +792,7 @@ class Api:
             if required_key not in filters:
                 filters[required_key] = default_value
 
-        url = "%s%s" % (BASE_API, FinanceReport.endpoint)
+        url = f"{BASE_API}{FinanceReport.endpoint}"
         url = self._build_query_parameters(url, filters)
         response = self._api_call(url)
 
@@ -847,7 +848,7 @@ class Api:
             if required_key not in filters:
                 filters[required_key] = default_value
 
-        url = "%s%s" % (BASE_API, SalesReport.endpoint)
+        url = f"{BASE_API}{SalesReport.endpoint}"
         url = self._build_query_parameters(url, filters)
         response = self._api_call(url)
 
