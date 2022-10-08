@@ -305,6 +305,21 @@ class Profile(Resource):
     """
 
     endpoint = "/v1/profiles"
+    attributes = [
+        "name",
+        "platform",
+        "profileContent",
+        "uuid",
+        "createdDate",
+        "profileState",
+        "profileType",
+        "expirationDate",
+    ]
+    relationships = {
+        "certificates": {"multiple": True},
+        "devices": {"multiple": True},
+        "bundleId": {"multiple": False},
+    }
 
 
 # Reporting
