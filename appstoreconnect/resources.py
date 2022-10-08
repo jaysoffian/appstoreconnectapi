@@ -1,3 +1,7 @@
+"""
+appstoreconnect/resources.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""
 import inspect
 import sys
 from abc import ABC, abstractmethod

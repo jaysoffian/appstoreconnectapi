@@ -1,3 +1,7 @@
+"""
+appstoreconnect/api.py
+~~~~~~~~~~~~~~~~~~~~~~
+"""
 import gzip
 import hashlib
 import json
