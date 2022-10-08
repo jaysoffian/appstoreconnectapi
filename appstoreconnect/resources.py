@@ -279,6 +279,15 @@ class Device(Resource):
 
     endpoint = "/v1/devices"
     type = "devices"
+    attributes = [
+        "deviceClass",
+        "model",
+        "name",
+        "platform",
+        "status",
+        "udid",
+        "addedDate",
+    ]
 
 
 class Profile(Resource):
