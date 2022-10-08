@@ -775,12 +775,12 @@ class Api:
         """
         return self._modify_resource(device, locals())
 
-    def list_profiles(self, filters=None, sort=None):
+    def list_profiles(self, filters=None, sort=None, includes=None):
         """
         :reference: https://developer.apple.com/documentation/appstoreconnectapi/list_and_download_profiles
         :return: an iterator over Profile resources
         """
-        return self._get_resources(Profile, filters, sort)
+        return self._get_resources(Profile, filters, sort, includes)
 
     # Reporting
     def download_finance_reports(
