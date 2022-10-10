@@ -3,12 +3,15 @@ appstoreconnect/resources.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 from abc import ABC, abstractmethod
+from pprint import pprint
 
 
 class Resource(ABC):
     relationships = {}
 
     def __init__(self, data, api):
+        # print(self.__class__.__name__)
+        # pprint(data)
         self._data = data
         self._api = api
 
@@ -18,19 +21,25 @@ class Resource(ABC):
         if item in self._data.get("attributes", {}):
             return self._data.get("attributes", {})[item]
         if item in self.relationships:
+            data = self._data.get("relationships", {})[item].get("data")
+            inclusions = {}
+            for d in self._data.get("included", []):
+                inclusions.setdefault(d["type"], {})[d["id"]] = d
 
             def getter():
+                print(self.__class__.__name__)
+                pprint(self.data)
+
                 # Try to fetch relationship
-                nonlocal item
                 url = self._data.get("relationships", {})[item]["links"]["related"]
                 if self.relationships[item]["multiple"]:
-                    return self._api.get_related_resources(full_url=url)
+                    return self._api.get_related_resources(url, self, data, inclusions)
                 else:
-                    return self._api.get_related_resource(full_url=url)
+                    return self._api.get_related_resource(url, data, inclusions)
 
             return getter
 
-        raise AttributeError("%s has no attributes %s" % (self.type_name, item))
+        raise AttributeError("%s has no attribute %s" % (self.type_name, item))
 
     def __repr__(self):
         return "%s id %s" % (self.type_name, self._data.get("id"))
