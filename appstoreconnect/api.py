@@ -67,6 +67,55 @@ class HttpMethod(Enum):
     DELETE = 4
 
 
+class IterResource:
+    def __init__(self, api, url, cls):
+        self.api = api
+        self.url = url
+        self.cls = cls
+        self.index = 0
+        self.total_length = None
+        self.payload = None
+
+    def __getitem__(self, item):
+        items = list(self)
+        return items[item]
+
+    def __iter__(self):
+        return self
+
+    def __repr__(self):
+        return f"Iterator over {cls.__name__} resource"
+
+    def __len__(self):
+        if not self.payload:
+            self.fetch_page()
+        return self.total_length
+
+    def __next__(self):
+        if not self.payload:
+            self.fetch_page()
+        if self.index < len(self.payload.get("data", [])):
+            data = self.payload.get("data", [])[self.index]
+            self.index += 1
+            return self.cls(data, self.api)
+        else:
+            self.url = self.payload.get("links", {}).get("next", None)
+            self.index = 0
+            if self.url:
+                self.fetch_page()
+                if self.index < len(self.payload.get("data", [])):
+                    data = self.payload.get("data", [])[self.index]
+                    self.index += 1
+                    return self.cls(data, self.api)
+            raise StopIteration()
+
+    def fetch_page(self):
+        self.payload = self.api._api_call(self.url)
+        self.total_length = (
+            self.payload.get("meta", {}).get("paging", {}).get("total", 0)
+        )
+
+
 class APIError(Exception):
     def __init__(self, error_string, status_code=None):
         try:
@@ -116,45 +165,49 @@ class Api:
             algorithm=ALGORITHM,
         )
 
-    def _get_resource(self, Resource, resource_id):
-        url = f"{BASE_API}{Resource.endpoint}/{resource_id}"
+    def _get_resource(self, cls, resource_id):
+        url = f"{BASE_API}{cls.endpoint}/{resource_id}"
         payload = self._api_call(url)
-        return Resource(payload.get("data", {}), self)
+        return cls(payload.get("data", {}), self)
 
     def _get_resource_from_payload_data(self, payload):
         payload_type = payload.get("type")
         try:
-            resource_type = resource_types[payload_type]
+            cls = resource_types[payload_type]
         except KeyError:
             raise APIError(f"Unsupported resource type {payload_type}")
 
-        return resource_type(payload, self)
+        return cls(payload, self)
 
-    def get_related_resource(self, full_url):
-        payload = self._api_call(full_url)
-        data = payload.get("data")
+    def get_related_resource(self, url, data=None):
+        if data is None:
+            payload = self._api_call(url)
+            data = payload.get("data")
         if data is None:
             return None
         elif type(data) == dict:
             return self._get_resource_from_payload_data(data)
 
-    def get_related_resources(self, full_url):
-        payload = self._api_call(full_url)
-        data = payload.get("data", [])
+    def get_related_resources(self, url, cls, data=None):
+        if data is None:
+            return IterResource(self, url, cls)
+            payload = self._api_call(url)
+            print(payload)
+            data = payload.get("data", [])
         for resource in data:
             yield self._get_resource_from_payload_data(resource)
 
-    def _create_resource(self, Resource, args):
+    def _create_resource(self, cls, args):
         attributes = {}
-        for attribute in Resource.attributes:
+        for attribute in cls.attributes:
             if attribute in args and args[attribute] is not None:
                 attributes[attribute] = args[attribute]
 
         relationships_dict = {}
-        for relation in Resource.relationships.keys():
+        for relation in cls.relationships.keys():
             if relation in args and args[relation] is not None:
                 relationships_dict[relation] = {}
-                if Resource.relationships[relation].get("multiple", False):
+                if cls.relationships[relation].get("multiple", False):
                     relationships_dict[relation]["data"] = []
                     relationship_objects = args[relation]
                     if type(relationship_objects) is not list:
@@ -176,15 +229,15 @@ class Api:
             "data": {
                 "attributes": attributes,
                 "relationships": relationships_dict,
-                "type": Resource.type,
+                "type": cls.type,
             }
         }
-        url = f"{BASE_API}{Resource.endpoint}"
+        url = f"{BASE_API}{cls.endpoint}"
         if self._debug:
             print(post_data)
         payload = self._api_call(url, HttpMethod.POST, post_data)
 
-        return Resource(payload.get("data", {}), self)
+        return cls(payload.get("data", {}), self)
 
     def _modify_resource(self, resource, args):
         attributes = {}
@@ -235,77 +288,25 @@ class Api:
         url = f"{BASE_API}{resource.endpoint}/{resource.id}"
         self._api_call(url, HttpMethod.DELETE)
 
-    def _get_resources(
-        self, Resource, filters=None, sort=None, full_url=None, includes=None
-    ):
-        class IterResource:
-            def __init__(self, api, url):
-                self.api = api
-                self.url = url
-                self.index = 0
-                self.total_length = None
-                self.payload = None
+    def _get_resources(self, cls, filters=None, sort=None, include=None):
+        query_string = self._build_query_parameters(filters, sort, include)
+        url = f"{BASE_API}{cls.endpoint}?{query_string}"
+        return IterResource(self, url, cls)
 
-            def __getitem__(self, item):
-                items = list(self)
-                return items[item]
-
-            def __iter__(self):
-                return self
-
-            def __repr__(self):
-                return f"Iterator over {Resource.__name__} resource"
-
-            def __len__(self):
-                if not self.payload:
-                    self.fetch_page()
-                return self.total_length
-
-            def __next__(self):
-                if not self.payload:
-                    self.fetch_page()
-                if self.index < len(self.payload.get("data", [])):
-                    data = self.payload.get("data", [])[self.index]
-                    self.index += 1
-                    return Resource(data, self.api)
-                else:
-                    self.url = self.payload.get("links", {}).get("next", None)
-                    self.index = 0
-                    if self.url:
-                        self.fetch_page()
-                        if self.index < len(self.payload.get("data", [])):
-                            data = self.payload.get("data", [])[self.index]
-                            self.index += 1
-                            return Resource(data, self.api)
-                    raise StopIteration()
-
-            def fetch_page(self):
-                self.payload = self.api._api_call(self.url)
-                self.total_length = (
-                    self.payload.get("meta", {}).get("paging", {}).get("total", 0)
-                )
-
-        url = full_url if full_url else f"{BASE_API}{Resource.endpoint}"
-        url = self._build_query_parameters(url, filters, sort, includes)
-        return IterResource(self, url)
-
-    def _build_query_parameters(self, url, filters, sort=None, includes=None):
+    def _build_query_parameters(self, filters, sort=None, include=None):
         params = {}
         if filters:
             params.update({f"filter[{key}]": filters[key] for key in filters})
         if sort:
             params["sort"] = sort
-        if includes:
-            params["includes"] = (
-                includes if isinstance(includes, str) else ",".join(includes)
-            )
-        query = "&".join(f"{k}={v}" for k, v in params.items())
-        return f"{url}?{query}"
+        if include:
+            params["include"] = include
+        return "&".join(f"{k}={v}" for k, v in params.items())
 
     def _api_call(self, url, method=HttpMethod.GET, post_data=None):
         headers = {"Authorization": f"Bearer {self.token}"}
         if self._debug:
-            print(f"{method.value} {url}")
+            print(f"{method.name} {url}")
 
         if self._submit_stats:
             endpoint = url.replace(BASE_API, "")
@@ -775,12 +776,12 @@ class Api:
         """
         return self._modify_resource(device, locals())
 
-    def list_profiles(self, filters=None, sort=None, includes=None):
+    def list_profiles(self, filters=None, sort=None, include=None):
         """
         :reference: https://developer.apple.com/documentation/appstoreconnectapi/list_and_download_profiles
         :return: an iterator over Profile resources
         """
-        return self._get_resources(Profile, filters, sort, includes)
+        return self._get_resources(Profile, filters, sort, include)
 
     # Reporting
     def download_finance_reports(
@@ -796,8 +797,8 @@ class Api:
             if required_key not in filters:
                 filters[required_key] = default_value
 
-        url = f"{BASE_API}{FinanceReport.endpoint}"
-        url = self._build_query_parameters(url, filters)
+        query_string = self._build_query_parameters(filters)
+        url = f"{BASE_API}{FinanceReport.endpoint}?{query_string}"
         response = self._api_call(url)
 
         if split_response:
@@ -852,8 +853,8 @@ class Api:
             if required_key not in filters:
                 filters[required_key] = default_value
 
-        url = f"{BASE_API}{SalesReport.endpoint}"
-        url = self._build_query_parameters(url, filters)
+        query_string = self._build_query_parameters(filters)
+        url = f"{BASE_API}{SalesReport.endpoint}?{query_string}"
         response = self._api_call(url)
 
         if save_to:
