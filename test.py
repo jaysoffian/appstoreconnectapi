@@ -6,7 +6,8 @@ import re
 import sys
 import time
 from collections import defaultdict
-from dataclasses import dataclass
+
+# from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from itertools import chain
@@ -14,6 +15,7 @@ from pathlib import Path
 
 import jwt
 import requests
+from pydantic.dataclasses import dataclass
 
 
 def jprint(data):
@@ -166,7 +168,6 @@ class AppStoreConnectApi:
             If not given, the API returns a default number of items, usually much
             smaller than the maximum allowed per request.
 
-
         The App Store Connect API returns data in pages, one page per request. This
         iterator requests a page per iteration until no more pages are available. Each
         page is a JSON object containing "data", "links", and "included" (if "include"
@@ -227,9 +228,9 @@ class Object:
         return list(cls.__dataclass_fields__)  # pylint:disable=no-member
 
     @classmethod
-    def from_data(cls, data):
+    def load(cls, data):
         if "links" in data and "attributes" in data:
-            return cls.types[data["type"]](data)
+            return cls.types[data["type"]].parse(data)
         return data
 
     def __init__(self, obj):
@@ -237,6 +238,7 @@ class Object:
 
         self.id = obj["id"]
         self.url = obj["links"]["self"]
+        self._obj = obj
 
         attributes = obj["attributes"]
         relationships = obj.get("relationships", {})
@@ -249,9 +251,9 @@ class Object:
             elif name in relationships:
                 data = relationships[name].get("data")
                 if isinstance(data, dict):
-                    value = self.from_data(data)
+                    value = self.load(data)
                 elif isinstance(data, list):
-                    value = [self.from_data(obj) for obj in data]
+                    value = [self.load(obj) for obj in data]
                 elif relationships[name].get("meta", {}).get("paging"):
                     value = []
                 else:
@@ -272,27 +274,27 @@ class Object:
     @classmethod
     def get(cls, api, id, **kwargs):
         meta = cls.Meta
-        return cls.from_data(api.get_data(f"{meta.path}/{id}", **kwargs))
+        return cls.load(api.get_data(f"{meta.path}/{id}", **kwargs))
 
     @classmethod
     def all(cls, api, **kwargs):
         meta = cls.Meta
         kwargs.setdefault("limit", meta.limit)
-        return [cls.from_data(obj) for obj in api.get_all_data(meta.path, **kwargs)]
+        return [cls.load(obj) for obj in api.get_all_data(meta.path, **kwargs)]
 
     @classmethod
     def create(cls, api, *args, **kwargs):
         meta = cls.Meta
         data = {"data": meta.create(*args, **kwargs), "type": cls.type}
         resp = api.post(meta.path, json=data)
-        return cls.from_data(resp.json()["data"])
+        return cls.load(resp.json()["data"])
 
     @classmethod
     def update(cls, api, id, *args, **kwargs):
         meta = cls.Meta
         data = {"data": meta.update(*args, **kwargs), "id": id, "type": cls.type}
         resp = api.patch(f"{meta.path}/{id}", json=data)
-        return cls.from_data(resp.json()["data"])
+        return cls.load(resp.json()["data"])
 
 
 objectclass = Object.objectclass
@@ -481,11 +483,15 @@ class Profile(Object):
             bundleId: str,
             certificate_ids: list[str],
             device_ids: list[str] = None,
+            templateName: str = None,
         ):
             if not device_ids:
                 device_ids = []
+            attributes = {"name": name, "profileType": str(profileType)}
+            if templateName:
+                attributes["templateName"] = templateName
             return {
-                "attributes": {"name": name, "profileType": str(profileType)},
+                "attributes": attributes,
                 "relationships": {
                     "bundleId": data_relation("bundleIds", bundleId),
                     "certificates": data_relation_list("certificates", certificate_ids),
@@ -529,7 +535,7 @@ yahoo_api = AppStoreConnectApi(**auth_kwargs("yahoo"))
 
 
 def main():
-    api = AppStoreConnectApi(**auth_kwargs("aol"))
+    api = AppStoreConnectApi(**auth_kwargs("yahoo"))
     api.debug = True
     # Fields that we want in the response for each data type. If not specified for
     # a given data type, the API returns all fields.
