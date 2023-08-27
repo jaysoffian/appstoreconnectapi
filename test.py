@@ -6,6 +6,7 @@ import re
 import sys
 import time
 from collections import defaultdict
+from typing import Optional
 
 # from dataclasses import dataclass
 from datetime import datetime
@@ -201,11 +202,13 @@ class AppStoreConnectApi:
         return list(chain(*self.get_data_iter(path_or_url, **kwargs)))
 
 
-class Object:
+class BaseObject:
     """An Object returned by the App Store Connect API"""
 
     types = {}
     type: str
+    id: str
+    url: str
 
     class Meta:
         path: str
@@ -218,7 +221,8 @@ class Object:
         def decorator(obj):
             obj.type = type
             cls.types[obj.type] = obj
-            return dataclass(obj, init=False, repr=False)
+            # return dataclass(obj, init=False, repr=False)
+            return dataclass(obj, init=True, repr=False)
 
         return decorator
 
@@ -228,39 +232,37 @@ class Object:
         return list(cls.__dataclass_fields__)  # pylint:disable=no-member
 
     @classmethod
-    def load(cls, data):
-        if "links" in data and "attributes" in data:
-            return cls.types[data["type"]].parse(data)
-        return data
+    def load(cls, obj):
+        if "links" not in obj or "attributes" not in obj:
+            return obj
 
-    def __init__(self, obj):
-        assert self.type == obj["type"]
-
-        self.id = obj["id"]
-        self.url = obj["links"]["self"]
-        self._obj = obj
+        new = cls.types[obj["type"]]
+        assert new.type == obj["type"]
+        kwargs = dict(id=obj["id"], url=obj["links"]["self"])
 
         attributes = obj["attributes"]
         relationships = obj.get("relationships", {})
 
         # pylint:disable=no-member
-        for name, field in self.__dataclass_fields__.items():
+        for name, field in new.__dataclass_fields__.items():
             if name in attributes:
                 value = attributes[name]
-                value = field.type(value) if value is not None else value
+                value = field.type(value) if value is not None else ""
             elif name in relationships:
                 data = relationships[name].get("data")
                 if isinstance(data, dict):
-                    value = self.load(data)
+                    value = cls.load(data)
                 elif isinstance(data, list):
-                    value = [self.load(obj) for obj in data]
+                    value = [cls.load(obj) for obj in data]
                 elif relationships[name].get("meta", {}).get("paging"):
                     value = []
                 else:
-                    value = None
+                    value = field.type()
             else:
-                value = None
-            setattr(self, name, value)
+                value = field.type()
+            kwargs[name] = value
+
+        return new(**kwargs)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(id={self.id})"
@@ -297,10 +299,11 @@ class Object:
         return cls.load(resp.json()["data"])
 
 
-objectclass = Object.objectclass
+objectclass = BaseObject.objectclass
 
+DateTimeString = str
 
-class DateTimeString:
+class DateTimeStringX:
     def __init__(self, date_time_string):
         self._dt = datetime.fromisoformat(date_time_string)
         self._str = date_time_string
@@ -392,6 +395,13 @@ class ProfileType(StringEnum):
     MAC_CATALYST_APP_DEVELOPMENT = auto()
     MAC_CATALYST_APP_STORE = auto()
     MAC_CATALYST_APP_DIRECT = auto()
+
+
+@dataclass
+class Object(BaseObject):
+    type: str
+    id: str
+    url: str
 
 
 @objectclass("bundleIds")
@@ -531,12 +541,12 @@ def auth_kwargs(account="yahoo"):
 
 
 aol_api = AppStoreConnectApi(**auth_kwargs("aol"))
+aol_api.debug = True
+
 yahoo_api = AppStoreConnectApi(**auth_kwargs("yahoo"))
+yahoo_api.debug = True
 
-
-def main():
-    api = AppStoreConnectApi(**auth_kwargs("yahoo"))
-    api.debug = True
+def main(api=aol_api):
     # Fields that we want in the response for each data type. If not specified for
     # a given data type, the API returns all fields.
     fields = {
@@ -550,7 +560,7 @@ def main():
     include = ("bundleId", "certificates", "devices")
 
     profiles = Profile.all(api, fields=fields, include=include)
-    return api, profiles
+    return profiles
 
 
 if __name__ == "__main__":
